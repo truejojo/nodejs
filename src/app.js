@@ -2,12 +2,9 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const Customer = require('./models/customer');
-// const dotenv = require('dotenv');
-// dotenv.config();
 const app = express();
 mongoose.set('strictQuery', false);
 
-// mongodb+srv://joeveh:<db_password>@cluster0.we6dm.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -19,34 +16,12 @@ if (process.env.NODE_ENV !== 'production') {
 const PORT = process.env.PORT || 3000;
 const CONNECTION = process.env.CONNECTION;
 
-const customers = [
-  {
-    name: 'Jojo',
-    industry: 'Programming',
-  },
-  {
-    name: 'Vi',
-    industry: 'School',
-  },
-  {
-    name: 'Zo',
-    industry: 'Kita',
-  },
-];
-
-// const customer = new Customer({
-//   name: 'Jasmin',
-//   industry: 'Extrem Sport: Parkour',
-// });
-
 app.get('/', async (req, res) => {
   res.send('welcome');
 });
 
 // get all customers
 app.get('/api/customers', async (req, res) => {
-  // console.log(await mongoose.connection.db.listCollections().toArray());
-
   try {
     const result = await Customer.find();
     res.json({ customers: result });
@@ -57,21 +32,10 @@ app.get('/api/customers', async (req, res) => {
 
 // get customer by id
 app.get('/api/customers/:id', async (req, res) => {
-  // res.json({
-  //   requestParams: req.params, // einfach angehängt => /50
-  //   // /50/Hambur => /:id/:state
-  //   requestQuery: req.query, // ?age=50&state=Hamburg
-  // });
-  // console.log({
-  //   requestParams: req.params, // einfach angehängt => /50
-  //   // /50/Hambur => /:id/:state
-  //   requestQuery: req.query, // ?age=50&state=Hamburg
-  // });
   try {
     const customerId = req.params.id;
-    console.log(customerId);
     const customer = await Customer.findById(customerId);
-    console.log(customer);
+
     if (!customer) {
       res.status(404).json({ error: 'User not found!' });
     } else {
@@ -91,22 +55,21 @@ app.put('/api/customers/:id', async (req, res) => {
       req.body,
       { new: true },
     );
-    console.log(customer);
     res.json({ customer });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-// update customer by small part
+
+// update customer by property/properties
 app.patch('/api/customers/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
-    const customer = await Customer.findOneAndReplace(
+    const customer = await Customer.findByIdAndUpdate(
       { _id: customerId },
       req.body,
       { new: true },
     );
-    console.log(customer);
     res.json({ customer });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -126,7 +89,6 @@ app.delete('/api/customers/:id', async (req, res) => {
 
 // add new customer
 app.post('/api/customers', async (req, res) => {
-  console.log(req.body);
   const customer = new Customer(req.body);
   try {
     await customer.save();
@@ -138,6 +100,20 @@ app.post('/api/customers', async (req, res) => {
 
 app.post('/', (req, res) => {
   res.send('This is a post request');
+});
+
+app.get('/api/orders/:id', async (req, res) => {
+  try {
+    const result = await Customer.findOne({ 'orders._id': req.params.id });
+    if (result) {
+      res.json(result);
+    } else {
+      res.status(404).json('err', 'not found');
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 const start = async () => {
